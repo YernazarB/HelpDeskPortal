@@ -1,0 +1,31 @@
+version: '3.4'
+ 
+networks:
+  net0:
+    driver: bridge 
+ 
+services:
+  web-api:
+    image: dev/helpdeskportal:latest
+    container_name: web-api
+    depends_on:
+      - "postgres"
+    build:
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080     
+    networks:
+      - net0  
+  
+  postgres:
+    image: "postgres"
+    container_name: "postgres"
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "123"
+      POSTGRES_DB: "HelpDeskPortal"
+    ports:
+      - 5432:5432
+    restart: always
+    networks:
+      - net0
