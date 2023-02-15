@@ -11,16 +11,14 @@ namespace HelpDesk.Infrastructure.Handlers.QueryHandlers
 {
     public class GetOrganizationsQueryHandler : BaseHandler<GetOrganizationsQuery, OrganizationViewModel[]>
     {
-        private readonly IDistributedCache _cache;
         public GetOrganizationsQueryHandler(AppDbContext db, ILogger<GetOrganizationsQueryHandler> logger, IUserAccessor userAccessor, 
-            IDistributedCache cache) : base(db, logger, userAccessor)
+            IDistributedCache cache) : base(db, logger, userAccessor, cache)
         {
-            _cache = cache;
         }
 
         protected override async Task<BaseResponse<OrganizationViewModel[]>> HandleRequest(GetOrganizationsQuery request, CancellationToken cancellationToken)
         {
-            var organizationsString = await _cache.GetStringAsync(CacheHelper.OrganizationsKey, cancellationToken);
+            var organizationsString = await Cache.GetStringAsync(CacheHelper.OrganizationsKey, cancellationToken);
             OrganizationViewModel[] organizations;
 
             if (organizationsString != null)
@@ -30,6 +28,7 @@ namespace HelpDesk.Infrastructure.Handlers.QueryHandlers
             else
             {
                 organizations = await DbContext.Organizations
+                    .Where(x => !x.IsDeleted)
                     .Select(x => new OrganizationViewModel
                     {
                         Id = x.Id,
@@ -38,7 +37,7 @@ namespace HelpDesk.Infrastructure.Handlers.QueryHandlers
                 organizationsString = JsonConvert.SerializeObject(organizations);
 
                 var options = new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) };
-                await _cache.SetStringAsync(CacheHelper.OrganizationsKey, organizationsString, options, cancellationToken);
+                await Cache.SetStringAsync(CacheHelper.OrganizationsKey, organizationsString, options, cancellationToken);
             }
 
             return new BaseResponse<OrganizationViewModel[]>(organizations);
