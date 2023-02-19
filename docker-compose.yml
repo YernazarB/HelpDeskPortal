@@ -1,0 +1,44 @@
+version: '3.4'
+ 
+networks:
+  net0:
+    driver: bridge 
+ 
+services:
+  web-api:
+    image: dev/helpdeskportal:latest
+    container_name: web-api
+    depends_on:
+      - "postgres"
+      - "rabbitmq"
+    build:
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080     
+    networks:
+      - net0  
+  
+  postgres:
+    image: "postgres"
+    container_name: "postgres"
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "123"
+      POSTGRES_DB: "HelpDeskPortal"
+    ports:
+      - 5432:5432
+    restart: always
+    networks:
+      - net0
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    ports:
+        - 5672:5672
+        - 15672:15672
+    volumes:
+        - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+        - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+    networks:
+        - net0

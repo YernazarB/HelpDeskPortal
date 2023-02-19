@@ -2,6 +2,7 @@
 using HelpDesk.Application.Responses;
 using HelpDesk.Domain.Enums;
 using HelpDesk.Infrastructure.Services;
+using HelpDesk.Infrastructure.Services.CacheService;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -12,11 +13,13 @@ namespace HelpDesk.Infrastructure.Handlers
         protected readonly ILogger Logger;
         protected readonly AppDbContext DbContext;
         protected readonly IUserAccessor UserAccessor;
-        public BaseHandler(AppDbContext db, ILogger logger, IUserAccessor userAccessor)
+        protected readonly ICacheService Cache;
+        public BaseHandler(AppDbContext db, ILogger logger, IUserAccessor userAccessor, ICacheService cache)
         {
             DbContext = db;
             Logger = logger;
             UserAccessor = userAccessor;
+            Cache = cache;
         }
 
         public async Task<BaseResponse<E>> Handle(T request, CancellationToken cancellationToken)

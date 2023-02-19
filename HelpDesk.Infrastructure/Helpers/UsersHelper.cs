@@ -1,6 +1,6 @@
 ﻿using HelpDesk.Domain.Entities;
 using HelpDesk.Domain.Enums;
-using HelpDesk.Domain.Options;
+using HelpDesk.Infrastructure.Options;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
