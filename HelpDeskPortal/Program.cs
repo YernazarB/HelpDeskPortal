@@ -1,7 +1,8 @@
-using HelpDesk.Domain.Options;
+using HelpDesk.Infrastructure.Options;
 using HelpDesk.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using HelpDeskPortal.Extensions;
+using MassTransit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,9 +20,15 @@ builder.Services.AddInfrastructureServices();
 builder.Services.AddRedisCache(builder.Configuration);
 
 var authSection = builder.Configuration.GetSection("Auth");
+var messageBrokerSection = builder.Configuration.GetSection("MessageBroker");
 builder.Services.Configure<AuthOptions>(authSection);
+builder.Services.Configure<MessageBrokerOptions>(messageBrokerSection);
+
 var authOptions = authSection.Get<AuthOptions>();
+var messageBrokerOptions = messageBrokerSection.Get<MessageBrokerOptions>();
+
 builder.Services.AddAuthenticationAndAuthorization(authOptions);
+builder.Services.AddMessageBroker(messageBrokerOptions);
 
 var app = builder.Build();
 

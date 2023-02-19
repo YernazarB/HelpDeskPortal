@@ -1,7 +1,7 @@
 ﻿using HelpDesk.Application.Requests.Queries;
 using HelpDesk.Application.Responses;
 using HelpDesk.Domain.Enums;
-using HelpDesk.Domain.Options;
+using HelpDesk.Infrastructure.Options;
 using HelpDesk.Infrastructure.Helpers;
 using MediatR;
 using Microsoft.EntityFrameworkCore;

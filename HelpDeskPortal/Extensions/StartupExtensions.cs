@@ -1,4 +1,4 @@
-﻿using HelpDesk.Domain.Options;
+﻿using HelpDesk.Infrastructure.Options;
 using HelpDesk.Infrastructure;
 using HelpDesk.Infrastructure.Helpers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -8,7 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using StackExchange.Redis;
 using System.Text;
-using System.Threading;
+using MassTransit;
 
 namespace HelpDeskPortal.Extensions
 {
@@ -101,6 +101,22 @@ namespace HelpDeskPortal.Extensions
             var cache = scope.ServiceProvider.GetRequiredService<IDistributedCache>();
 
             await cache.RemoveAsync(CacheHelper.OrganizationsKey);
+        }
+
+        public static void AddMessageBroker(this IServiceCollection services, MessageBrokerOptions options)
+        {
+            services.AddMassTransit(busConfig =>
+            {
+                busConfig.SetKebabCaseEndpointNameFormatter();
+                busConfig.UsingRabbitMq((context, configurator) =>
+                {
+                    configurator.Host(new Uri(options.Host), h =>
+                    {
+                        h.Username(options.Username);
+                        h.Password(options.Password);
+                    });
+                });
+            });
         }
     }
 }

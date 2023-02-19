@@ -1,4 +1,4 @@
-﻿namespace HelpDesk.Domain.Options
+﻿namespace HelpDesk.Infrastructure.Options
 {
     public class GlobalAdminOptions
     {
