@@ -2,8 +2,8 @@
 using HelpDesk.Application.Responses;
 using HelpDesk.Infrastructure.Helpers;
 using HelpDesk.Infrastructure.Services;
+using HelpDesk.Infrastructure.Services.CacheService;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 
 namespace HelpDesk.Infrastructure.Handlers
@@ -11,7 +11,7 @@ namespace HelpDesk.Infrastructure.Handlers
     public class UpdateOrganizationCommandHandler : BaseHandler<UpdateOrganizationCommand, OrganizationViewModel>
     {
         public UpdateOrganizationCommandHandler(AppDbContext db, ILogger<UpdateOrganizationCommandHandler> logger, IUserAccessor userAccessor, 
-            IDistributedCache cache) : base(db, logger, userAccessor, cache)
+            ICacheService cache) : base(db, logger, userAccessor, cache)
         {
         }
 
@@ -25,8 +25,8 @@ namespace HelpDesk.Infrastructure.Handlers
 
             organization.Name = request.Name;
             await DbContext.SaveChangesAsync(UserAccessor.UserId);
-            await Cache.RemoveAsync(CacheHelper.OrganizationsKey);
-            await Cache.RemoveAsync($"{CacheHelper.OrganizationsKey}:{organization.Id}");
+            await Cache.RemoveData(CacheHelper.OrganizationsKey, cancellationToken);
+            await Cache.RemoveData($"{CacheHelper.OrganizationsKey}:{organization.Id}", cancellationToken);
 
             return new BaseResponse<OrganizationViewModel>
                 (new OrganizationViewModel { Id = organization.Id, Name = organization.Name });

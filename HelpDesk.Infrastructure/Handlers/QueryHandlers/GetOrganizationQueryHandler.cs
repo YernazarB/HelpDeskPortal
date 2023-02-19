@@ -2,30 +2,28 @@
 using HelpDesk.Application.Responses;
 using HelpDesk.Infrastructure.Helpers;
 using HelpDesk.Infrastructure.Services;
+using HelpDesk.Infrastructure.Services.CacheService;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace HelpDesk.Infrastructure.Handlers
 {
     public class GetOrganizationQueryHandler : BaseHandler<GetOrganizationQuery, OrganizationViewModel>
     {
         public GetOrganizationQueryHandler(AppDbContext db, ILogger<GetOrganizationQueryHandler> logger, IUserAccessor userAccessor,
-            IDistributedCache cache)
+            ICacheService cache)
             : base(db, logger, userAccessor, cache)
         {
         }
 
         protected override async Task<BaseResponse<OrganizationViewModel>> HandleRequest(GetOrganizationQuery request, CancellationToken cancellationToken)
         {
-            OrganizationViewModel model;
             var organizationKey = $"{CacheHelper.OrganizationsKey}:{request.Id}";
-            var organizationJson = await Cache.GetStringAsync(organizationKey);
+            var model = await Cache.GetData<OrganizationViewModel>(organizationKey, cancellationToken);
 
-            if (organizationJson != null)
+            if (model != null)
             {
-                model = JsonConvert.DeserializeObject<OrganizationViewModel>(organizationJson);
+                return new BaseResponse<OrganizationViewModel>(model);
             }
 
             var organization = await DbContext.Organizations.FirstOrDefaultAsync(x => x.Id == request.Id);
@@ -33,9 +31,9 @@ namespace HelpDesk.Infrastructure.Handlers
             {
                 return NotFound(nameof(organization));
             }
+
             model = new OrganizationViewModel { Id = organization.Id, Name = organization.Name };
-            organizationJson = JsonConvert.SerializeObject(model);
-            await Cache.SetStringAsync(organizationKey, organizationJson);
+            await Cache.SetData(organizationKey, model, cancellationToken);
 
             return new BaseResponse<OrganizationViewModel>(model);
         }

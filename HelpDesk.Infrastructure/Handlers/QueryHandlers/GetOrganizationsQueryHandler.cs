@@ -2,43 +2,37 @@
 using HelpDesk.Application.Responses;
 using HelpDesk.Infrastructure.Helpers;
 using HelpDesk.Infrastructure.Services;
+using HelpDesk.Infrastructure.Services.CacheService;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace HelpDesk.Infrastructure.Handlers.QueryHandlers
 {
     public class GetOrganizationsQueryHandler : BaseHandler<GetOrganizationsQuery, OrganizationViewModel[]>
     {
         public GetOrganizationsQueryHandler(AppDbContext db, ILogger<GetOrganizationsQueryHandler> logger, IUserAccessor userAccessor, 
-            IDistributedCache cache) : base(db, logger, userAccessor, cache)
+            ICacheService cache) : base(db, logger, userAccessor, cache)
         {
         }
 
         protected override async Task<BaseResponse<OrganizationViewModel[]>> HandleRequest(GetOrganizationsQuery request, CancellationToken cancellationToken)
         {
-            var organizationsString = await Cache.GetStringAsync(CacheHelper.OrganizationsKey, cancellationToken);
-            OrganizationViewModel[] organizations;
+            var organizations = await Cache.GetData<OrganizationViewModel[]>(CacheHelper.OrganizationsKey, cancellationToken);
 
-            if (organizationsString != null)
+            if (organizations != null)
             {
-                organizations = JsonConvert.DeserializeObject<OrganizationViewModel[]>(organizationsString);
+                return new BaseResponse<OrganizationViewModel[]>(organizations);
             }
-            else
-            {
-                organizations = await DbContext.Organizations
+
+            organizations = await DbContext.Organizations
                     .Where(x => !x.IsDeleted)
                     .Select(x => new OrganizationViewModel
                     {
                         Id = x.Id,
                         Name = x.Name,
                     }).ToArrayAsync(cancellationToken);
-                organizationsString = JsonConvert.SerializeObject(organizations);
 
-                var options = new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) };
-                await Cache.SetStringAsync(CacheHelper.OrganizationsKey, organizationsString, options, cancellationToken);
-            }
+            await Cache.SetData(CacheHelper.OrganizationsKey, organizations, cancellationToken);
 
             return new BaseResponse<OrganizationViewModel[]>(organizations);
         }

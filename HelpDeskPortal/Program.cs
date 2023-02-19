@@ -28,7 +28,7 @@ var authOptions = authSection.Get<AuthOptions>();
 var messageBrokerOptions = messageBrokerSection.Get<MessageBrokerOptions>();
 
 builder.Services.AddAuthenticationAndAuthorization(authOptions);
-builder.Services.AddMessageBroker(messageBrokerOptions);
+//builder.Services.AddMessageBroker(messageBrokerOptions);
 
 var app = builder.Build();
 
